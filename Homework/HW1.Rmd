@@ -1,0 +1,17 @@
+---
+title: "HW1"
+author: "Sebastian Kirkpatrick"
+date: "2024-09-05"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+```
+
+## Question 1
+
+```{r}
+
+```
+
