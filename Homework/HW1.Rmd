@@ -7,11 +7,19 @@ output: pdf_document
 
 ```{r setup, include=FALSE}
 library(tidyverse)
+library(taylor)
 ```
 
 ## Question 1
 
 ```{r}
+set.seed(20240823)
+x <- rnorm(1000,0,1)
+```
 
+## Question 2
+
+```{r}
+#taylor_all_songs
 ```
 
