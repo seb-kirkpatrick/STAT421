@@ -12,14 +12,135 @@ library(taylor)
 
 ## Question 1
 
+a)
+
 ```{r}
 set.seed(20240823)
 x <- rnorm(1000,0,1)
+
+x_filtered <- x[x >= 1 | x <= 0]
+length(x_filtered)
+mean(x_filtered)
 ```
+666 values remained with a mean of -0.278
+
+b)
+
+```{r}
+n_mean <- function(n) {
+  x <- rnorm(n,0,1)
+  x_filtered <- x[x >= 1 | x <= 0]
+  mean <- mean(x_filtered)
+  return(mean)
+}
+
+n_mean(100)
+```
+Mean value of -0.005
+
+c)
+
+```{r}
+n <- 500
+mean_x <- rep(0, n)
+
+for (i in 1:n) {
+  mean_x[i] <- n_mean(10)
+}
+```
+
+
+```{r}
+hist(mean_x)
+
+max(mean_x)
+min(mean_x)
+```
+Maximum of 1.313, minimum of -1.455
 
 ## Question 2
 
+a)
+
 ```{r}
-#taylor_all_songs
+names(taylor_all_songs)
+nrow(taylor_all_songs)
+```
+29 variables and 356 observations, will not be naming them for you
+
+b) 
+
+```{r}
+boxplot(taylor_all_songs$duration_ms / 60000, horizontal = T)
 ```
 
+c)
+
+```{r}
+boxplot(taylor_all_songs$duration_ms / 60000 ~ taylor_all_songs$mode_name, horizontal = T)
+```
+
+d)
+
+```{r}
+taylor_all_songs |>
+  select(album_name, duration_ms) |>
+  na.omit() |>
+  group_by(album_name) |>
+  summarize(total_mins = sum(duration_ms, na.rm=T) / 60000) |>
+  arrange(-total_mins)
+```
+Red (Taylor's Version) is the longest with 130.7 minutes of music
+
+
+## Question 3
+
+```{r}
+n <- 100000
+results <- rep(0, n)
+
+for (i in 1:n) {
+
+initial_roll <- sum(sample(1:6,2, replace = TRUE))
+
+if (initial_roll == 7 | initial_roll == 11) {
+  result <- 1
+} else {
+  repeat {
+    roll <- sum(sample(1:6, 2, replace = TRUE))
+    if (roll == initial_roll) {
+      result <- 1
+      break
+    } else if (roll == 7 | roll == 11) {
+      result <- 0
+      break
+    }
+  }
+}
+
+results[i] <- result
+}
+
+mean(results)
+```
+About a 46.7% chance to win this weird version of craps
+
+## Question 4
+
+```{r}
+n <- 100000
+roll_num <- rep(0, n)
+
+for (i in 1:n) {
+  rolls <- 0
+  roll <- 0
+  while (roll != 6) {
+    roll <- sample(1:6, 1)
+    rolls <- rolls + 1
+  }
+  roll_num[i] <- rolls
+}
+
+mean(roll_num)
+```
+On average, it takes 6 rolls to roll a six (oh my goodness this is groundbreaking!!!!!!!!)
