@@ -1,0 +1,693 @@
+---
+title: "Optimization"
+author: "Gregory J. Matthews"
+format: 
+  revealjs:
+    chalkboard: true
+    slide-number: c/t
+    code-line-numbers: false
+    linestretch: 1.25
+    html-math-method:
+      method: mathjax
+      url: "https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"
+editor: visual
+execute: 
+  echo: true
+---
+
+## Optimization
+ - Newton-Raphson method... for optimization!
+ - Golden Section Method
+ - Gradient Descent
+ - Simulated Annealing
+ 
+## Some Notes 
+
+ - For a function, a global maximum is defined to be at $x^{\star}$ if $f(x) \le f(x^{\star})$ for all $x$.
+ - Likewise, a global minimum is defined at $x^{\star}$ if $f(x) \ge f(x^{\star})$ for all $x$.
+ - A local maximum (or minimum) is a maximum value in a neighborhood around $x$.
+ - A necessary condition for $x^{\star}$ to be a local maximum is $f'(x^{\star}) = 0$ and $f''(x^{\star}) \le 0$.
+ - A sufficient condition for $x^{\star}$ to be a local maximum is $f'(x^{\star}) = 0$ and $f''(x^{\star}) < 0$.
+ 
+## Some Notes 
+
+ - It's much easier to find a local maximum or minimum and all these techniques are for finding local extrema.
+ - All these methods work by generating a sequence of points that hopefully converge to a local maxima.
+
+ 
+## Newton's Method for optimization
+
+ - We used this before to find roots.  We can modify it slightly to find extrema.
+
+$$
+x_{n+1} = x + \frac{f'(x_n)}{f''(x_{n+1})}
+$$ 
+
+## An Example
+
+```{r}
+f <- function(x){
+  exp(x/2) - x - 2
+}
+```
+
+```{r}
+#| echo: false
+
+library(ggplot2)
+x <- seq(-5,5,.1)
+plot(x,f(x),type = "l")
+abline(h = 0, lty = 3)
+abline(v = 0, lty = 3)
+points(1.38629,f(1.38629), col = "red", pch = 16)
+```
+
+## Example 
+```{r}
+f <- function(x){
+  exp(x/2) - x - 2
+}
+```
+
+```{r}
+fprime <- function(x){
+  1/2*exp(x/2) - 1
+}
+```
+
+```{r}
+uniroot(fprime, c(-10,10))
+```
+
+## Golden Section Method
+ 
+ - Slower, but more robust
+ - Interval based
+      - But we need THREE points now!
+ - Guaranteed to converge (if you start with correct bracketing)
+
+
+## Golden Section Method 1 {.smaller}
+ - Start with $x_l < x_m < x_r$ s.t. $f(x_l) ≤ f(x_m)$ and $f(x_r) ≤ f(x_m)$.
+  1. if $x_r − x_l ≤ \epsilon$ then stop
+  2. if $x_r − x_m > x_m − x_l$ then do 2a otherwise do 2b:
+     a. choose a point $y \in (x_m, x_r)$
+        
+        if $f(y) ≥ f(x_m)$ then put $x_l = x_m$ and $x_m = y$              
+        otherwise put $x_r = y$
+     b. choose a point $y \in (x_l, x_m)$ 
+        
+        if $f(y) ≥ f(x_m)$ then put $x_r = x_m$ and $x_m = y$ 
+        
+        otherwise put $x_l = y$
+  3. go back to step 1
+  
+## How do we choose y? 
+
+![](golden)
+
+## Deets
+
+ - Let $a = x_m−x_l$, $b = x_r −x_m$, and $c = y−x_m$. 
+ - We want to choose $y$ so that the ratio of the larger section to the smaller section stays constant from interation to iteration.
+ - Cases: 
+    1. if the new bracketing interval is $[x_l, y]$ then $\frac{a}{c} = \frac{b}{a}$.
+    2. if the new bracketing interval is $[x_m, x_r]$ then $\frac{b-c}{c} = \frac{b}{a}$.
+    
+## Deets
+
+ - So we want $\frac{a}{c} = \frac{b}{a}$ and $\frac{b-c}{c} = \frac{b}{a}$
+ - Let $\rho = \frac{b}{a}$ and solve for $c$.
+ - $c = \frac{a}{\rho}$ and $c = \frac{b}{\rho + 1}$
+ - $\frac{a}{\rho} = \frac{b}{\rho + 1}$
+ - $\rho + 1 = \frac{b\rho}{a} = \rho^2$
+ - $\rho^2 - \rho - 1 = 0$
+ - A root finding problem!
+ 
+## Deets
+ - $\rho^2 - \rho - 1 = 0$
+```{r}
+f <- function(rho){
+  rho^2 - rho  - 1
+}
+uniroot(f, c(0,2))$root
+```
+
+```{r}
+(1+sqrt(5))/2
+```
+
+
+## Golden Section Method 2 {.smaller}
+ - Start with $x_l < x_m < x_r$ s.t. $f(x_l) ≤ f(x_m)$ and $f(x_r) ≤ f(x_m)$.
+  1. if $x_r − x_l ≤ \epsilon$ then stop
+  2. if $x_r − x_m > x_m − x_l$ then do 2a otherwise do 2b:
+     a. choose a point $y = x_m + (x_r − x_m)/(1 + ρ)$
+        
+        if $f(y) ≥ f(x_m)$ then put $x_l = x_m$ and $x_m = y$              
+        otherwise put $x_r = y$
+     b. choose a point $y = x_m − (x_m − x_l)/(1 + ρ)$ 
+        
+        if $f(y) ≥ f(x_m)$ then put $x_r = x_m$ and $x_m = y$ 
+        
+        otherwise put $x_l = y$
+  3. go back to step 1
+
+## Implement this in class
+::: {.callout-note}
+Implement this here
+:::
+
+
+## Gradient Descent 
+ - "One can visualize standing in a mountainous terrain, and the goal is to get to the bottom through a series of steps. As long as each step goes downhill, we must eventually get to the bottom."  - ISLR 
+ - The basic idea is that if we want to find a minimum of a differentiable multivariate function, we should move in the direction of the negative gradient.  
+ - The gradient of a function is denoted by the symble called nabla: $\nabla$.  ([Why is it called nabla?](https://en.wikipedia.org/wiki/Nabla_symbol))
+ 
+## gganimate
+[gganimate gradient descent](https://vidyasagar.rbind.io/2019/06/gradient-descent-from-scratch-and-visualization/)
+ 
+## A quick note about convexity 
+
+  - If the function is convex, the minimum will be global.  
+  
+::: {.callout-warning}
+If the function is not convex, it will still converge (given some other conditions...) but it may not be global minimum.  It might not even be a minimum at all (i.e. saddle point).
+:::
+   
+## Gradient Descent   
+ - Let's say you want to minimize some function $F(x)$. 
+ - The gradient of $F$ is $\nabla F(\mathbf {x})$ 
+ - Then we start with some guess for the minimum $\mathbf{x_0}$.
+ - And we iterate: ${\displaystyle \mathbf {x} _{n+1}=\mathbf {x} _{n}-\gamma \nabla F(\mathbf {x} _{n}),\ n\geq 0.}$
+ 
+
+<!-- ## Gradient Descent      -->
+<!-- ISLR description:  -->
+
+<!--   1. Start with a guess $\theta_0$ for all the parameters in $\theta$, and set $t = 0$. -->
+<!--   2. Iterate until the objective fails to decrease: -->
+<!--       (a) Find a vector $\delta$ that reflects a small change in $\theta$, such that $\theta_{t+1} = \theta_{t} + \delta$ -->
+<!-- reduces the objective; i.e. such that $R(\theta_{t+1}) < R(\theta_{t+1})$ -->
+<!--       (b) Set $t = t+1$ -->
+
+
+ 
+## One Dimensional Example 
+ - In 1-D, the gradient is the derivative.  
+```{r}
+f <- function(x){
+  exp(x/2) - x - 2
+}
+
+fprime <- function(x){
+  1/2*exp(x/2) - 1
+}
+```
+
+```{r}
+#| echo: false
+x <- seq(-5,5,.1)
+plot(x,f(x),type = "l")
+abline(h = 0, lty = 3)
+abline(v = 0, lty = 3)
+points(1.38629,f(1.38629), col = "red", pch = 16)
+```
+
+## Find minimum 
+```{r}
+x <- c()
+#initial guess
+x[1] <- 5
+#learning rate
+gamma <- 1
+eps <- 10
+i <- 1
+  while (eps > 0.001){
+x[i + 1] <- x[i] - gamma*fprime(x[i])
+eps <- abs(x[i + 1] - x[i])
+i <- i + 1
+  }
+x
+```
+
+## Visualizing it
+
+```{r}
+#| echo: false
+y <- seq(-5,5,.1)
+plot(y,f(y),type = "l")
+abline(h = 0, lty = 3)
+abline(v = 0, lty = 3)
+points(x[1],f(x[1]), col  = "blue", pch = 16)
+points(1.38629,f(1.38629), col = "red", pch = 16)
+```
+
+## Visualizing it
+
+```{r}
+#| echo: false
+y <- seq(-5,5,.1)
+plot(y,f(y),type = "l")
+abline(h = 0, lty = 3)
+abline(v = 0, lty = 3)
+points(x[1:2],f(x[1:2]), col  = "blue", pch = 16)
+points(x[1:2],f(x[1:2]), col  = "blue", type = "l")
+points(1.38629,f(1.38629), col = "red", pch = 16)
+```
+
+
+## Visualizing it
+
+```{r}
+#| echo: false
+y <- seq(-5,5,.1)
+plot(y,f(y),type = "l")
+abline(h = 0, lty = 3)
+abline(v = 0, lty = 3)
+points(x[1:3],f(x[1:3]), col  = "blue", pch = 16)
+points(x[1:3],f(x[1:3]), col  = "blue", type = "l")
+points(1.38629,f(1.38629), col = "red", pch = 16)
+```
+
+## Visualizing it
+
+```{r}
+#| echo: false
+y <- seq(-5,5,.1)
+plot(y,f(y),type = "l")
+abline(h = 0, lty = 3)
+abline(v = 0, lty = 3)
+points(x[1:4],f(x[1:4]), col  = "blue", pch = 16)
+points(x[1:4],f(x[1:4]), col  = "blue", type = "l")
+points(1.38629,f(1.38629), col = "red", pch = 16)
+```
+
+## Visualizing it
+
+```{r}
+#| echo: false
+y <- seq(-5,5,.1)
+plot(y,f(y),type = "l")
+abline(h = 0, lty = 3)
+abline(v = 0, lty = 3)
+points(x[1:5],f(x[1:5]), col  = "blue", pch = 16)
+points(x[1:5],f(x[1:5]), col  = "blue", type = "l")
+points(1.38629,f(1.38629), col = "red", pch = 16)
+```
+
+
+## Slower learning rate
+```{r}
+x <- c()
+#initial guess
+x[1] <- 5
+#learning rate
+gamma <- 0.1
+eps <- 10
+i <- 1
+  while (eps > 0.001){
+x[i + 1] <- x[i] - gamma*fprime(x[i])
+eps <- abs(x[i + 1] - x[i])
+i <- i + 1
+  }
+x[1:20]
+```
+
+## Visualizing it
+
+```{r}
+#| echo: false
+y <- seq(-5,5,.1)
+plot(y,f(y),type = "l")
+abline(h = 0, lty = 3)
+abline(v = 0, lty = 3)
+points(x[1],f(x[1]), col  = "blue", pch = 16)
+points(1.38629,f(1.38629), col = "red", pch = 16)
+```
+
+## Visualizing it
+
+```{r}
+#| echo: false
+y <- seq(-5,5,.1)
+plot(y,f(y),type = "l")
+abline(h = 0, lty = 3)
+abline(v = 0, lty = 3)
+points(x[1:2],f(x[1:2]), col  = "blue", pch = 16)
+points(x[1:2],f(x[1:2]), col  = "blue", type = "l")
+points(1.38629,f(1.38629), col = "red", pch = 16)
+```
+
+
+## Visualizing it
+
+```{r}
+#| echo: false
+y <- seq(-5,5,.1)
+plot(y,f(y),type = "l")
+abline(h = 0, lty = 3)
+abline(v = 0, lty = 3)
+points(x[1:3],f(x[1:3]), col  = "blue", pch = 16)
+points(x[1:3],f(x[1:3]), col  = "blue", type = "l")
+points(1.38629,f(1.38629), col = "red", pch = 16)
+```
+
+## Visualizing it
+
+```{r}
+#| echo: false
+y <- seq(-5,5,.1)
+plot(y,f(y),type = "l")
+abline(h = 0, lty = 3)
+abline(v = 0, lty = 3)
+points(x[1:4],f(x[1:4]), col  = "blue", pch = 16)
+points(x[1:4],f(x[1:4]), col  = "blue", type = "l")
+points(1.38629,f(1.38629), col = "red", pch = 16)
+```
+
+## Visualizing it
+
+```{r}
+#| echo: false
+y <- seq(-5,5,.1)
+plot(y,f(y),type = "l")
+abline(h = 0, lty = 3)
+abline(v = 0, lty = 3)
+points(x[1:5],f(x[1:5]), col  = "blue", pch = 16)
+points(x[1:5],f(x[1:5]), col  = "blue", type = "l")
+points(1.38629,f(1.38629), col = "red", pch = 16)
+```
+
+## 2-D example 
+ - Simple Linear regression model!
+```{r}
+#| echo: false
+set.seed(1234)
+x <- rnorm(20)
+y <- 10 + 3*x + rnorm(20,0,3)
+plot(x, y)
+print("beta0 = 10, beta1 = 3")
+lm(y~x)$coef
+abline(a = 10, b = 3, col = "red")
+abline(a = 8.106, b = 2.352, col = "red", lty = 3)
+```
+## The surface
+
+```{r}
+lse <- function(beta){
+  yhat <- beta[1] + beta[2]*x
+  sum((y - (yhat))^2)
+}
+```
+
+```{r}
+#| echo: false
+dat <- expand.grid(beta0= seq(5,15,0.1),beta1= seq(0,6,0.1))
+dat$z <- NA
+for (i in 1:nrow(dat)){
+  dat$z[i] <- lse(c(dat$beta0[i],dat$beta1[i]))
+}
+ggplot() + geom_tile(aes(x = beta0, y = beta1,fill = log(z)), data = dat)  + geom_point(aes(x = 8.106, y = 2.352), col = "red", size = 3) + scale_fill_continuous(type = "viridis") 
+```
+
+
+## Gradient
+
+```{r}
+dlseB0 <- function(beta){
+  yhat <- beta[1] + beta[2]*x
+  -2/length(x)*sum((y - yhat))
+}
+
+dlseB1 <- function(beta){
+  yhat <- beta[1] + beta[2]*x
+  -2/length(x)*sum(x*(y - yhat))
+}
+```
+
+## Gradient Descent
+
+```{r}
+#learning rate
+gamma <- 0.1
+#initialize
+z <- list()
+#truth 10,3
+z[[1]] <- c(15,6)
+
+for (i in 1:50){
+z[[i+1]] <- c(NA,NA)
+z[[i + 1]][1] <- z[[i]][1] - gamma*dlseB0(z[[i]])
+z[[i + 1]][2] <- z[[i]][2] - gamma*dlseB1(c(z[[i+1]][1],z[[i]][2]))
+
+}
+
+do.call(rbind,z)[1:5,]
+
+
+```
+
+## The path it took
+```{r}
+#| echo: false
+
+dat <- expand.grid(beta0= seq(5,15,0.1),beta1= seq(0,6,0.1))
+dat$z <- NA
+for (i in 1:nrow(dat)){
+  dat$z[i] <- lse(c(dat$beta0[i],dat$beta1[i]))
+}
+
+
+path <- as.data.frame(do.call(rbind,z))
+names(path) <- c("beta0","beta1")
+
+ggplot() + geom_tile(aes(x = beta0, y = beta1,fill = log(z)), data = dat)  + geom_point(aes(x = 8.106, y = 2.352)) + scale_fill_continuous(type = "viridis") +  geom_path(aes(x = beta0, y = beta1), data = path, col = "red") + geom_point(aes(x = beta0, y = beta1), data = path, col = "red")
+```
+
+## Gradient Descent Small learning rate
+
+```{r}
+#learning rate
+gamma <- 0.01
+#initialize
+z <- list()
+#truth 10,3
+z[[1]] <- c(15,6)
+
+for (i in 1:500){
+z[[i+1]] <- c(NA,NA)
+z[[i + 1]][1] <- z[[i]][1] - gamma*dlseB0(z[[i]])
+z[[i + 1]][2] <- z[[i]][2] - gamma*dlseB1(c(z[[i+1]][1],z[[i]][2]))
+
+}
+
+
+do.call(rbind,z)[1:5,]
+
+
+```
+
+## The path it took
+```{r}
+#| echo: false
+dat <- expand.grid(beta0= seq(5,15,0.1),beta1= seq(0,6,0.1))
+dat$z <- NA
+for (i in 1:nrow(dat)){
+  dat$z[i] <- lse(c(dat$beta0[i],dat$beta1[i]))
+}
+
+
+path <- as.data.frame(do.call(rbind,z))
+names(path) <- c("beta0","beta1")
+
+ggplot() + geom_tile(aes(x = beta0, y = beta1,fill = log(z)), data = dat)  + geom_point(aes(x = 8.106, y = 2.352)) + scale_fill_continuous(type = "viridis") +  geom_path(aes(x = beta0, y = beta1), data = path, col = "red") + geom_point(aes(x = beta0, y = beta1), data = path, col = "red") + ggtitle("Low learning rate")
+```
+
+## Learning rate too high
+
+```{r}
+#learning rate
+gamma <- 1
+#initialize
+z <- list()
+#truth 10,3
+z[[1]] <- c(15,6)
+
+for (i in 1:50){
+z[[i+1]] <- c(NA,NA)
+z[[i + 1]][1] <- z[[i]][1] - gamma*dlseB0(z[[i]])
+z[[i + 1]][2] <- z[[i]][2] - gamma*dlseB1(c(z[[i+1]][1],z[[i]][2]))
+
+}
+
+do.call(rbind,z)[1:5,]
+
+
+
+```
+
+## The path it took
+```{r}
+#| echo: false
+dat <- expand.grid(beta0= seq(-50,100,1),beta1= seq(-50,50,1))
+dat$z <- NA
+for (i in 1:nrow(dat)){
+  dat$z[i] <- lse(c(dat$beta0[i],dat$beta1[i]))
+}
+
+
+path <- as.data.frame(do.call(rbind,z))
+names(path) <- c("beta0","beta1")
+
+ggplot() + geom_tile(aes(x = beta0, y = beta1,fill = log(z)), data = dat)  + geom_point(aes(x = 8.106, y = 2.352)) + scale_fill_continuous(type = "viridis") +  geom_path(aes(x = beta0, y = beta1), data = path, col = "red") + geom_point(aes(x = beta0, y = beta1), data = path, col = "red") + ggtitle("High learning rate")
+```
+
+
+
+## Optimization in R: optimize and optim
+ - `optimize` is useful for univariate functions
+ - `optim` is used for multivariate functions
+ - `optim` minimizes by default  
+
+## Methods in R {.smaller}
+ - `Nelder-Mead`: default method.  uses only function values and is robust but relatively slow. It will work reasonably well for non-differentiable functions.
+ - `BFGS`: Quasi-Newton Method.  uses function values and gradients
+ - `CG`: Conjugate gradient methods will generally be more fragile than the BFGS method, but as they do not store a matrix they may be successful in much larger optimization problems.
+ - `L-BFGS-B`:  allows box constraints, that is each variable can be given a lower and/or upper bound. 
+ - `SANN`: belongs to the class of stochastic global optimization methods. It uses only function values but is relatively slow.
+ - `Brent`: Only for 1-dimensional problems.
+
+## Default method in R {.smaller}
+ - `Nelder-Mead`: default method.  uses only function values and is robust but relatively slow. It will work reasonably well for non-differentiable functions.
+ - `BFGS`: Quasi-Newton Method.  uses function values and gradients
+ - `CG`: Conjugate gradient methods will generally be more fragile than the BFGS method, but as they do not store a matrix they may be successful in much larger optimization problems.
+ - `L-BFGS-B`:  allows box constraints, that is each variable can be given a lower and/or upper bound. 
+ - ***`SANN`: belongs to the class of stochastic global optimization methods. It uses only function values but is relatively slow.***
+ - `Brent`: Only for 1-dimensional problems.
+
+## Optim in action
+Converges
+```{r}
+f <- function(x){
+  z <- (x[1]-2)^2 + (x[1]*x[2]-100)^(-3)
+  return(z)
+}
+optim(c(0,0),f)
+```
+
+## Optim in action
+Does not converge
+```{r}
+f <- function(x){
+  z <- (x[1]-2)^2 + (x[1]*x[2]-100)^(-3)
+  return(-z)
+}
+optim(c(0,0),f)
+```
+
+
+## Simulated Annealing
+ - Initialize
+ - Randomly move (in a smart way!)
+ - Accept or Reject 
+ - Repeat 
+
+
+## Traveling Salesman
+```{r}
+#| echo: false
+state <- read.csv("https://raw.githubusercontent.com/jasperdebie/VisInfo/master/us-state-capitals.csv")
+#Final 
+
+library(maps)
+library(mapdata)
+library(ggplot2)
+df <- state
+usa <- map_data('usa')
+ggplot(data=usa, aes(x=long, y=lat)) + 
+  geom_polygon(fill='lightblue') + 
+  theme(axis.title.x=element_blank(), axis.text.x=element_blank(), axis.ticks.x=element_blank(),
+        axis.title.y=element_blank(), axis.text.y=element_blank(), axis.ticks.y=element_blank()) + 
+  ggtitle('U.S. Map: Alphabetical Path') + 
+  coord_fixed(1.3) + geom_path(aes(y = latitude, x = longitude), data = df)
+
+```
+
+## Traveling Salesman
+```{r}
+#| echo: false
+state <- read.csv("https://raw.githubusercontent.com/jasperdebie/VisInfo/master/us-state-capitals.csv")
+#Final 
+best <- c(2,47,44,3,31,6,27,16,36,43,18,42,17,14,22,35,48,20,38,30,7,39,21,19,29,45,34,8,46,32,40,11,10,1,24,4,25,15,13,49,23,33,41,50,26,12,37,28,5,9)
+library(maps)
+library(mapdata)
+library(ggplot2)
+df <- state[best,]
+usa <- map_data('usa')
+ggplot(data=usa, aes(x=long, y=lat)) + 
+  geom_polygon(fill='lightblue') + 
+  theme(axis.title.x=element_blank(), axis.text.x=element_blank(), axis.ticks.x=element_blank(),
+        axis.title.y=element_blank(), axis.text.y=element_blank(), axis.ticks.y=element_blank()) + 
+  ggtitle('U.S. Map: A reasonable solution') + 
+  coord_fixed(1.3) + geom_path(aes(y = latitude, x = longitude), data = df)
+
+```
+
+## Simulatd Annealing
+ Deets go here.  
+
+<!-- ## -->
+<!-- Let s = s0 -->
+<!-- For k = 0 through kmax (exclusive): -->
+<!-- T ← temperature( 1 - (k+1)/kmax ) -->
+<!-- Pick a random neighbour, snew ← neighbour(s) -->
+<!-- If P(E(s), E(snew), T) ≥ random(0, 1): -->
+<!-- s ← snew -->
+<!-- Output: the final state s -->
+
+## MLE example 
+ - Let's compute a maximum likelihood example.  
+ - Recall: $L(\theta | x_1, ... , x_n) = \prod_{i = 1}^{n} f(x_i |\theta)$
+ - Often it's easier to work with log likelihood (i.e. $log(L(\theta | x_1, ... , x_n))$).
+ - Let's say we have a sample of data assumed to be from a $\chi^2$ distribution with unknown degrees of freedom.  
+ - There is no closed form solution!  
+ - Must be solved for numerically!
+ - Find the MLE for the degrees of freedom if you observe the following data points: 46.32, 39.78, 40.90, 47.48, 41.25
+ 
+## MLE example  
+```{r}
+x <- c(46.32, 39.78, 40.90, 47.48, 41.25)
+
+#Compute log likelihood
+ll <- function(theta){
+  out <- sum(dchisq(x,theta, log = TRUE))
+  return(out)
+}
+
+ll <- Vectorize(ll)
+ll(20)
+
+plot(seq(0.1,100,0.1),ll(seq(0.1,100,0.1)), type = "l", xlab = "theta",ylab = "ll")
+```
+
+
+```{r}
+ll <- function(theta){
+  out <- sum(dchisq(x,theta, log = TRUE))
+  return(out)
+}
+
+#By default this searched for a minimum
+optimize(ll, c(1,100), maximum = TRUE)
+
+# True degrees of freedom was 42. 
+```
+
+
+## Appendix
+
+ - [Maximum likelihood estimation with tensorflow probability and pystan (and now rstan too)](https://jeffpollock9.github.io/maximum-likelihood-estimation-with-tensorflow-probability-and-pystan/)
+ 
+ 
+ 
