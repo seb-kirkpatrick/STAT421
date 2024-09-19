@@ -154,9 +154,56 @@ uniroot(f, c(0,2))$root
   3. go back to step 1
 
 ## Implement this in class
-::: {.callout-note}
-Implement this here
-:::
+<!-- ::: {.callout-note} -->
+<!-- Implement this here -->
+<!-- ::: -->
+```{r}
+f <- function(x){
+  -(exp(x/2) - x - 2)
+}
+
+#By default we will search for a maximum
+#Implement golden section method
+golden <- function(f, xl, xm, xr, eps = 0.00001) {
+  rho <- (1 + sqrt(5)) / 2
+  #Check that the initial brackets make sense
+  if (!(f(xm) > f(xl) &
+        f(xm) > f(xr) &
+        xl < xm & xm < xr)) {
+    return(print("Try again loser!"))
+  }
+  
+  
+  while (xr - xl > eps) {
+    if (xr - xm > xm - xl) {
+      y <- xm + (xr - xm) / (1 + rho)
+      if (f(y) >= f(xm)) {
+        xl <- xm
+        xm <- y
+      } else {
+        xr <- y
+      }
+    } else {
+      y <- xm - (xm - xl) / (1 + rho)
+      if (f(y) >= f(xm)) {
+        xr <- xm
+        xm <- y
+      } else {
+        xl <- y
+      }
+    }
+  }
+  
+  return(c(xl,xm))
+  
+}
+
+
+golden(f, 0, 2, 3)
+
+
+```
+
 
 
 ## Gradient Descent 
@@ -514,7 +561,7 @@ z <- list()
 #truth 10,3
 z[[1]] <- c(15,6)
 
-for (i in 1:50){
+for (i in 1:2000){
 z[[i+1]] <- c(NA,NA)
 z[[i + 1]][1] <- z[[i]][1] - gamma*dlseB0(z[[i]])
 z[[i + 1]][2] <- z[[i]][2] - gamma*dlseB1(c(z[[i+1]][1],z[[i]][2]))
@@ -592,6 +639,354 @@ optim(c(0,0),f)
  - Randomly move (in a smart way!)
  - Accept or Reject 
  - Repeat 
+ 
+## Simulatd Annealing
+Let's say we want to minimize $f(x)$.
+ 
+ - Start with an initial value $x_0$.  Choose a large temperature $T$.  
+ - Randomly modify $x_t$: $x_{new} = x_t + \epsilon$
+ - Define $p = e^{-\frac{f(x_{new}) - f(x_t)}{T}}$
+ - If $f(x_{new}) < f(x_t)$, then $x_{t+1} = x_{new}$.
+ - If $f(x_{new}) \ge f(x_t)$, then $x_{t+1} = x_{new}$ ***with  probability $p$***, otherwise $x_{t+1} = x_t$.
+ 
+## Simulatd Annealing
+ - Run for some period of time.  
+ - "Cool" the temperature (i.e. make it smaller).
+ - Repeat until the the temperature reached the end of the schedule.   
+
+
+## Temperature 
+ - $p = e^{-\frac{f(x_{new}) - f(x_t)}{T}}$. 
+ - When $T$ is large, this probability is near 1, so we travel uphill often.  
+ - When T is small, this probability is near 0, so we travel downhill almost all the time.  
+ 
+## How do we choose $\epsilon$?
+
+ - Great question!
+ - Let's talk about it!
+ 
+## Example 
+```{r}
+f <- function(x){
+  exp(x/2) - x - 2
+}
+```
+
+```{r}
+#| echo: false
+x <- seq(-5,5,.1)
+plot(x,f(x),type = "l")
+abline(h = 0, lty = 3)
+abline(v = 0, lty = 3)
+points(1.38629,f(1.38629), col = "red", pch = 16)
+```
+
+## Example
+```{r}
+#Choose x0
+x <- c()
+x[1] <- 0
+temp <- 10
+sigma <- 1
+i <- 1
+while (temp > 0.001) {
+  xnew <- x[i] + rnorm(1, 0, sigma)
+  if (f(xnew) < f(x[i])) {
+    x[i + 1] <- xnew
+  } else {
+    p <- exp(-(f(xnew) - f(x[i])) / temp)
+    if (runif(1) < p){
+      x[i + 1] <- xnew
+    } else {
+      x[i+1] <- x[i]
+    }
+  }
+  temp <- 0.99*temp 
+  i <- i + 1
+}
+```
+
+## Example
+```{r}
+#| echo: false
+plot(1:length(x),x, xlab = "iteration", type  ="l")
+abline(h = 1.38629, col = "red")
+```
+
+## Example starting farther away
+```{r}
+#Choose x0
+x <- c()
+x[1] <- 20
+temp <- 10
+sigma <- 1
+i <- 1
+while (temp > 0.001) {
+  xnew <- x[i] + rnorm(1, 0, sigma)
+  if (f(xnew) < f(x[i])) {
+    x[i + 1] <- xnew
+  } else {
+    p <- exp(-(f(xnew) - f(x[i])) / temp)
+    if (runif(1) < p){
+      x[i + 1] <- xnew
+    } else {
+      x[i+1] <- x[i]
+    }
+  }
+  temp <- 0.99*temp 
+  i <- i + 1
+}
+```
+
+## Example starting farther away
+```{r}
+#| echo: false
+plot(1:length(x),x, xlab = "iteration", type  ="l")
+abline(h = 1.38629, col = "red")
+```
+
+## Example with larger $\sigma^2$
+
+```{r}
+#Choose x0
+x <- c()
+x[1] <- 0
+temp <- 10
+sigma <- 10
+i <- 1
+while (temp > 0.001) {
+  xnew <- x[i] + rnorm(1, 0, sigma)
+  if (f(xnew) < f(x[i])) {
+    x[i + 1] <- xnew
+  } else {
+    p <- exp(-(f(xnew) - f(x[i])) / temp)
+    if (runif(1) < p){
+      x[i + 1] <- xnew
+    } else {
+      x[i+1] <- x[i]
+    }
+  }
+  temp <- 0.99*temp 
+  i <- i + 1
+}
+```
+
+## Example with larger $\sigma^2$
+```{r}
+#| echo: false
+plot(1:length(x),x, xlab = "iteration", type  ="l")
+abline(h = 1.38629, col = "red")
+```
+
+## Example with larger $\sigma^2$ and starting farther away
+```{r}
+#Choose x0
+x <- c()
+x[1] <- 20
+temp <- 10
+sigma <- 10
+i <- 1
+while (temp > 0.001) {
+  xnew <- x[i] + rnorm(1, 0, sigma)
+  if (f(xnew) < f(x[i])) {
+    x[i + 1] <- xnew
+  } else {
+    p <- exp(-(f(xnew) - f(x[i])) / temp)
+    if (runif(1) < p){
+      x[i + 1] <- xnew
+    } else {
+      x[i+1] <- x[i]
+    }
+  }
+  temp <- 0.99*temp 
+  i <- i + 1
+}
+```
+
+## Example with larger $\sigma^2$ and starting farther away
+```{r}
+#| echo: false
+plot(1:length(x),x, xlab = "iteration", type  ="l")
+abline(h = 1.38629, col = "red")
+```
+
+## Example: What if we start really far away?
+```{r}
+#Choose x0
+x <- c()
+x[1] <- 1000
+temp <- 10
+sigma <- 1
+i <- 1
+while (temp > 0.001) {
+  xnew <- x[i] + rnorm(1, 0, sigma)
+  if (f(xnew) < f(x[i])) {
+    x[i + 1] <- xnew
+  } else {
+    p <- exp(-(f(xnew) - f(x[i])) / temp)
+    if (runif(1) < p){
+      x[i + 1] <- xnew
+    } else {
+      x[i+1] <- x[i]
+    }
+  }
+  temp <- 0.99*temp 
+  i <- i + 1
+}
+```
+
+## Example: What if we start really far away?
+```{r}
+#| echo: false
+plot(1:length(x),x, xlab = "iteration", type  ="l")
+abline(h = 1.38629, col = "red")
+```
+
+## Example: What if we start really far away, but let $\sigma^2$ be larger?
+```{r}
+#Choose x0
+x <- c()
+x[1] <- 1000
+temp <- 10
+#Larger epsilon
+sigma <- 100
+i <- 1
+while (temp > 0.001) {
+  xnew <- x[i] + rnorm(1, 0, sigma)
+  if (f(xnew) < f(x[i])) {
+    x[i + 1] <- xnew
+  } else {
+    p <- exp(-(f(xnew) - f(x[i])) / temp)
+    if (runif(1) < p){
+      x[i + 1] <- xnew
+    } else {
+      x[i+1] <- x[i]
+    }
+  }
+  temp <- 0.99*temp 
+  i <- i + 1
+}
+```
+
+## Example: What if we start really far away, but let $\sigma^2$ be larger?
+```{r}
+#| echo: false
+plot(1:length(x),x, xlab = "iteration", type  ="l")
+abline(h = 1.38629, col = "red")
+```
+
+## Example: Slower cooling schedule
+```{r}
+#Choose x0
+x <- c()
+x[1] <- 0
+temp <- 10
+sigma <- 1
+i <- 1
+while (temp > 0.001) {
+  xnew <- x[i] + rnorm(1, 0, sigma)
+  if (f(xnew) < f(x[i])) {
+    x[i + 1] <- xnew
+  } else {
+    p <- exp(-(f(xnew) - f(x[i])) / temp)
+    if (runif(1) < p){
+      x[i + 1] <- xnew
+    } else {
+      x[i+1] <- x[i]
+    }
+  }
+  temp <- 0.9999*temp 
+  i <- i + 1
+}
+```
+
+## Example: Slower cooling schedule
+```{r}
+#| echo: false
+plot(1:length(x),x, xlab = "iteration", type  ="l")
+abline(h = 1.38629, col = "red")
+```
+
+## LSE with simulated annealing
+Do it in class.  
+
+## 2-D example 
+ - Simple Linear regression model!
+```{r}
+#| echo: false
+set.seed(1234)
+x <- rnorm(20)
+y <- 10 + 3*x + rnorm(20,0,3)
+plot(x, y)
+print("beta0 = 10, beta1 = 3")
+lm(y~x)$coef
+abline(a = 10, b = 3, col = "red")
+abline(a = 8.106, b = 2.352, col = "red", lty = 3)
+```
+
+## The surface
+
+```{r}
+lse <- function(beta){
+  yhat <- beta[1] + beta[2]*x
+  sum((y - (yhat))^2)
+}
+```
+
+```{r}
+#| echo: false
+dat <- expand.grid(beta0= seq(5,15,0.1),beta1= seq(0,6,0.1))
+dat$z <- NA
+for (i in 1:nrow(dat)){
+  dat$z[i] <- lse(c(dat$beta0[i],dat$beta1[i]))
+}
+ggplot() + geom_tile(aes(x = beta0, y = beta1,fill = log(z)), data = dat)  + geom_point(aes(x = 8.106, y = 2.352), col = "red", size = 3) + scale_fill_continuous(type = "viridis") 
+```
+
+## LSE with simulated annealing
+Code goes here.
+
+
+## Traveling Salesman
+```{r}
+#| eval: false
+state <- read.csv("https://raw.githubusercontent.com/jasperdebie/VisInfo/master/us-state-capitals.csv")
+
+f <- function(temp){
+tot <- sum((temp[-nrow(temp),"latitude"]- temp[-1,"latitude"])^2 + (temp[-nrow(temp),"longitude"]- temp[-1,"longitude"])^2)
+return(tot)
+}
+```  
+
+## Traveling Salesman
+```{r}
+#| eval: false
+perm <- best <- 1:50
+ttt <- 1000
+for (i in 1:1000){print(f(state[best,]))
+cand <- sample(perm,50,replace = FALSE)
+dif <-  f(state[cand,]) - f(state[best,])  
+p <- exp(-dif/ttt)
+if (dif <= 0){best <- cand}
+if (dif > 0 & runif(1) < p){best <- cand}
+}
+```
+
+## Traveling Salesman
+```{r}
+#| eval: false
+ttt <- 1000
+for (i in 1:100000){print(f(state[best,]))
+  #this is better!
+  ind <- sample(perm,2,replace = FALSE)
+  cand <- best
+  cand[ind] <- best[c(ind[2],ind[1])]
+  dif <-  f(state[cand,]) - f(state[best,])  
+  p <- exp(-dif/ttt)
+  if (dif <= 0){best <- cand}
+  if (dif > 0 & runif(1) < p){best <- cand}
+}
+```
 
 
 ## Traveling Salesman
@@ -634,8 +1029,7 @@ ggplot(data=usa, aes(x=long, y=lat)) +
 
 ```
 
-## Simulatd Annealing
- Deets go here.  
+
 
 <!-- ## -->
 <!-- Let s = s0 -->
@@ -654,9 +1048,12 @@ ggplot(data=usa, aes(x=long, y=lat)) +
  - There is no closed form solution!  
  - Must be solved for numerically!
  - Find the MLE for the degrees of freedom if you observe the following data points: 46.32, 39.78, 40.90, 47.48, 41.25
+
  
 ## MLE example  
 ```{r}
+#| eval: FALSE
+#| label: quang
 x <- c(46.32, 39.78, 40.90, 47.48, 41.25)
 
 #Compute log likelihood
@@ -666,11 +1063,17 @@ ll <- function(theta){
 }
 
 ll <- Vectorize(ll)
-ll(20)
 
 plot(seq(0.1,100,0.1),ll(seq(0.1,100,0.1)), type = "l", xlab = "theta",ylab = "ll")
 ```
 
+## MLE example: The log-likelihood
+```{r}
+#| echo: FALSE
+#| ref-label: quang
+```
+
+## MLE Example
 
 ```{r}
 ll <- function(theta){
@@ -683,6 +1086,11 @@ optimize(ll, c(1,100), maximum = TRUE)
 
 # True degrees of freedom was 42. 
 ```
+
+## MLE Example: With simulated annealing
+Do example in class.  
+Code goes here.  
+
 
 
 ## Appendix
