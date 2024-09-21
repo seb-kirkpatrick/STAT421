@@ -1,0 +1,189 @@
+---
+title: "HW2"
+author: "Sebastian Kirkpatrick"
+date: "2024-09-18"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+```
+
+
+## Question 1
+
+a)
+
+```{r}
+f_1 <- function(x){x^3 - 2*x + 5}
+fp_1 <- function(x){3*x^2 - 2}
+xvec <- c()
+xvec[1] <- 1000
+for (i in 2:41){
+xvec[i] <- xvec[i-1] - f_1(xvec[i-1])/fp_1(xvec[i-1])
+}
+xvec
+```
+Root: -2.0945836
+
+Starting at 1000, it took 40 iterations to find the negative root
+
+b)
+
+```{r}
+
+secant <- function(f, x0 = c(1000,1000.1), max.iter = 100, tol = 0.00001){
+  
+  x <- x0
+  n <- 2
+  eps <- 1000
+  while (n < max.iter & eps > tol) {
+    
+    x[n + 1] <- x[n] - f(x[n]) * ((x[n] - x[n - 1]) / (f(x[n]) - f(x[n - 1])))
+    
+    eps <- abs(f(x[n+1]))
+    n <- n + 1
+    
+  }
+  
+  return(x)
+  
+}
+
+secant(f_1)
+```
+38 iterations
+
+
+## Question 2
+
+```{r}
+dumb <- function(lol, n=100){
+  i <- 0:n
+  y<- sum((-1)^i * lol^i / (factorial(i))^2)
+  return(y)
+}
+
+dumb(2)
+
+secant(dumb, c(0,1))
+```
+Root: 1.445788
+
+
+## Question 3
+
+a)
+
+```{r}
+rrb <- (26/52) * (25/51) * (26/50)
+rbr <- (26/52) * (26/51) * (25/50)
+brr <- (26/52) * (26/51) * (25/50)
+
+choose(26,2) * choose(26,1) / choose(52,3)
+
+prob_win <- rrb + rbr + brr
+prob_win
+```
+.3824 probability to win
+
+b)
+
+```{r}
+(1-prob_win) * -1
+
+win <- function(greg_is_lame) {
+  ((-1) * (1-prob_win)) + ((greg_is_lame) * (prob_win)) 
+}
+```
+Expected Value: 0.3824x - 0.6176
+
+c)
+
+```{r}
+secant(win, c(0,1))
+```
+To be a fair game, x = $1.62
+
+
+## Question 4
+
+```{r}
+silly <- function(x) {(x^3) - 1957*(x^2) + 1187296 * x - 210305472}
+uniroot(silly, c(0,1000))
+uniroot(silly, c(0,350))
+uniroot(silly, c(350, 800))
+uniroot(silly, c(800, 1000))
+```
+Roots: 312, 773, 872
+
+## Question 5
+
+a)
+
+```{r}
+exp_CDF <- function(x,lam=2) {
+  1-(exp(-(x*lam)))
+}
+
+exp_CDF(1,lam=1)
+```
+CDF = $1-e^{-\lambda x}$
+
+b)
+
+```{r}
+find_med <- function(x, lam=2) {
+  exp_CDF(x,lam) - 0.5
+}
+
+uniroot(find_med, c(0,1))$root
+```
+Median: x = 0.3466
+
+c)
+
+```{r}
+a <- function(x) {
+  exp_CDF(x,lam) - (perc*0.01)
+}
+
+mp <- function(lam,perc){
+med_p <- function(x,lam,perc) {
+  pexp(x,lam) - (perc * 0.01)
+}
+uniroot(med_p,c(-3,3),lam,perc)$root
+}
+
+mp(2,50)
+```
+
+d)
+
+```{r}
+dat <- data.frame(i = numeric(), p = numeric(), root = numeric())
+
+percs <- c(5,25,50,75,95)
+
+for (i in 1:100) {
+  for (p in percs) {
+  root <- mp(i,p)
+  dat <- rbind(dat, data.frame(i=i,p=p,root=root))
+  }
+}
+```
+
+```{r}
+dat |>
+  ggplot(
+    aes(x=i,y=root,color=factor(p))
+  ) +
+  geom_point() +
+  labs(
+    x = "Lambda",
+    y = "Median"
+  ) +
+  scale_color_discrete(name="Percentile")
+```
+
