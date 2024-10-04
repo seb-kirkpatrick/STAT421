@@ -1,0 +1,158 @@
+---
+title: "HW3"
+author: "Sebastian Kirkpatrick"
+date: "2024-10-03"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+```
+
+## Question 1
+
+```{r}
+rosen <- function(var) {
+  res <- (1 - var[1])^2 + 100 *((var[2] - (var[1]^2))^2) 
+  res
+}
+
+test <- c(6,8)
+
+rosen(test)
+```
+
+```{r}
+niter <- 100000
+x <- matrix(NA,ncol=2,nrow=niter)
+x[1,] <- c(2,2)
+
+
+temp <- 5000
+sigma <- 1
+i <- 1
+
+for (i in 1:(niter-1)) {
+  xnew <- x[i,] + rnorm(2,0,sigma)
+  if(rosen(xnew) < rosen(x[i,])){
+    x[i+1,] <- xnew
+  } else {
+    p <- exp(-(rosen(xnew) - rosen(x[i,])) / temp)
+    if (runif(1) < p) {
+      x[i+1,] <- xnew
+    } else {
+      x[i+1,] <- x[i,]
+    }
+  }
+  temp <- 0.999*temp
+}
+
+x[100000,]
+```
+Looking like (1,1) is the minimum
+
+## Question 2
+
+```{r}
+xgrad <- function(x){
+  (2*(x[1]-1) - (400*x[1]*(x[2] - (x[1]^2))))
+}
+
+xgrad(c(1,1.4))
+
+ygrad <- function(x){
+  200*(x[2] - x[1]^2)
+}
+
+ygrad(c(2.6,1.4))
+```
+
+```{r}
+gamma <- 0.005
+z <- c()
+
+z[[1]] <- c(0,6)
+
+for (i in 1:1000){
+  z[[i+1]] <- c(NA,NA)
+  z[[i+1]][1] <- z[[i]][1] - (gamma * xgrad(z[[i]]))
+  z[[i+1]][2] <- z[[i]][2] - (gamma * ygrad(c(z[[i+1]][1],z[[i]][[2]])))
+}
+
+do.call(rbind,z)[1001,]
+```
+Right back at (1,1)
+
+## Question 3
+
+```{r}
+simp <- function(a,b,f,n){
+  if (n %% 2 != 0) {
+    stop("You suck bozo")
+  }
+  h <- (b - a) / n
+  x <- seq(a,b, by = h)
+  y <- f(x)
+
+  
+  area <- (h/3) * (y[1] + y[n+1] + 
+                     4 * sum(y[seq(2,n,by=2)]) +
+                     2 * sum(y[seq(3,n-1,by=2)]))
+  
+  
+  return(area)
+}
+
+q3 <- function(x){
+  (sin(x)+1) * (cos(x)+1)
+}
+
+simp(0,3*pi,q3,1000)
+```
+Area = 11.425
+
+```{r}
+3*pi + 2
+```
+^ Actual area
+
+
+## Question 4
+
+```{r}
+set.seed(740)
+nsim <- 1000000
+
+f <- function(var){
+  dexp(var,1/10)
+}
+
+ux <- runif(nsim,0,10)
+uy <- runif(nsim,0,0.1)
+
+mean(f(ux) > uy)
+```
+P(0 < X < 10) $\approx$ 0.632
+
+```{r}
+1 - exp(-1)
+```
+^ Actual probability
+
+## Question 5
+
+```{r}
+set.seed(614)
+nsim <- 1000000
+samp <- rgamma(nsim,5,5)
+fifth_moment <- samp^5
+mean(fifth_moment)
+```
+E($X^5$) $\approx$ 4.81
+
+```{r}
+(1/5^5 * gamma(10)) / gamma(5)
+(5 * 6 * 7 * 8 * 9) / 5^5
+```
+^ Actual 5th moment
