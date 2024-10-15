@@ -1,0 +1,216 @@
+---
+title: "Exam1"
+author: "Sebastian Kirkpatrick"
+date: "2024-10-15"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+```
+
+# Question 1
+
+```{r}
+f <- function(x){
+  out <- ((x^2)/(100)) + sin(x)
+  return(out)
+}
+
+secant <- function(f, x0 = c(0,1), max.iter = 100, tol = 0.0000000001){
+  
+  x <- x0
+  n <- 2
+  eps <- 1000
+  while (n < max.iter & eps > tol) {
+    
+    x[n + 1] <- x[n] - f(x[n]) * ((x[n] - x[n - 1]) / (f(x[n]) - f(x[n - 1])))
+    
+    eps <- abs(f(x[n+1]))
+    n <- n + 1
+    
+  }
+  
+return(x)  
+  
+}
+
+secant(f,c(-100,-75))
+secant(f,c(-100,-50))
+secant(f,c(-50,-8))
+secant(f,c(-5,5))
+secant(f, c(-1,1))
+secant(f, c(5,50))
+```
+Zeroes: -6.757, -3.049, -8.594, 3.247, 0, 5.925
+
+
+
+# Question 2
+
+```{r}
+set.seed(740)
+n <- 10000
+
+x <- rexp(n,1)
+x <- x[x>=4]
+c <- exp(-4)
+
+c * mean(log(x))
+```
+Approx. Value = 0.0292
+
+
+
+# Question 3
+
+a)
+
+```{r}
+set.seed(740)
+n <- 1000000
+small_stick <- rep(0,n)
+
+for (i in 1:n){
+  cut <- runif(1)
+  if (cut > 0.5){
+    small_stick[i] <- 1 - cut
+  } else {
+    small_stick[i] <- cut
+  }
+} 
+
+mean(small_stick)
+```
+Average length: 0.250 feet
+
+
+b)
+
+```{r}
+set.seed(740)
+n <- 1000000
+four_cuts <- rep(0,4)
+ratio <- rep(0,n)
+
+
+for (i in 1:n){
+  c1 <- runif(1)
+  
+  c2 <- runif(1)
+  c3 <- runif(1)
+  
+  four_cuts[1] <- c1 * c2
+  four_cuts[2] <- c1 * (1-c2)
+  
+  four_cuts[3] <- (1-c1) * c3
+  four_cuts[4] <- (1-c1) * (1-c3)
+  
+  ratio[i] <- max(four_cuts) / min(four_cuts)
+}
+
+mean(ratio)
+```
+Average ratio for my sim is 399.46
+
+# Question 4
+
+```{r}
+q4 <- function(x) {
+  return(-cos(x[1]) * cos(x[2]) * exp(-(x[1]^2 + x[2]^2)))
+}
+
+test <- c(0,0)
+q4(test)
+```
+
+```{r}
+set.seed(740)
+niter <- 100000
+x <- matrix(NA,ncol=2,nrow=niter)
+x[1,] <- c(1,1)
+
+
+temp <- 500
+sigma <- 1
+
+
+for (i in 1:(niter-1)) {
+  xnew <- x[i,] + rnorm(2,0,sigma)
+  if(q4(xnew) < q4(x[i,])){
+    x[i+1,] <- xnew
+  } else {
+    p <- exp(-(q4(xnew) - q4(x[i,])) / temp)
+    if (runif(1) < p) {
+      x[i+1,] <- xnew
+    } else {
+      x[i+1,] <- x[i,]
+    }
+  }
+  temp <- 0.99*temp
+}
+
+x[100000,]
+
+q4(c(0.002,0.0005))
+```
+Minimum: 0,0
+
+
+
+# Question 5
+
+```{r}
+set.seed(740)
+n <- 100000
+deck <- rep(1:13,4)
+count <- rep(0,n)
+
+for (i in 1:n){
+  
+  shuffle <- sample(deck)
+  
+  for (j in 2:52){
+    
+    if (shuffle[j] == shuffle[j-1]){
+      count[i] <- j
+      break
+    }
+  }
+  if (count[i] == 0){
+    count[i] <- 52
+  }
+}
+
+mean(count)
+```
+Average number of cards is 17
+
+
+
+# Question 6
+
+```{r}
+set.seed(740)
+n <- 10000
+emp <- 400
+
+days_worked <- rep(0,emp)
+
+for (j in 320:emp){
+  
+  days_open <- rep(0,n)
+  
+  for (i in 1:n){
+    
+    births <- sample(c(1:365),j,replace=T)
+    
+    days_open[i] <- 365 - n_distinct(births)
+  }
+  
+  days_worked[j] <- mean(days_open) * j
+}
+
+which.max(days_worked)
+```
+369 workers
