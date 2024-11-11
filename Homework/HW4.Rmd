@@ -1,0 +1,230 @@
+---
+title: "HW4"
+author: "Sebastian Kirkpatrick"
+date: "2024-10-28"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+```
+
+# Question 1
+
+```{r}
+samp <- function(x, k) {
+  n <- length(x)
+  y <- c()
+  
+  for (i in 1:k) {
+    j <- as.integer(runif(1,min=1,max=n-i+2))
+    y[i] <- x[j]
+    x[j] <- x[n + 1 - i]
+  }
+  
+  return(y)
+  
+}
+```
+
+```{r}
+x <- c(0,4,2,10)
+samp(x,3)
+```
+
+
+
+# Question 2
+
+a)
+
+N ~ $Poisson(\lambda = 10)$
+
+b)
+
+$X_i$ ~ $Geometric(p = 0.8)$
+
+c)
+
+Y = $\sum_{i=1}^{N}X_i$
+
+```{r}
+n <- function(lam,n) {
+  u <- runif(n)
+  x <- qpois(u,lam)
+  return(x)
+}
+
+xi <- function(p,n) {
+  u <- runif(n)
+  x <- qgeom(u,p)
+  return(x)
+}
+
+yt <- function(p,lam,nsim) {
+  Y <- c()
+  N <- n(lam,nsim)
+  
+  for (i in 1:nsim) {
+    XI <- xi(p, N[i])
+    Y[i] <- sum(XI)
+  }
+
+  return(Y)
+}
+
+
+ez <- function(p, lam, nsim) {
+  shoes <- c()
+  c <- rpois(nsim, lam)
+  for (i in 1:nsim) {
+    shoe <- rgeom(c[i], p)
+    shoes[i] <- sum(shoe)
+  }
+  return(shoes)
+}
+
+mean(yt(0.8, 10, 100000))
+mean(ez(0.8, 10, 100000))
+```
+Just checking with the built in functions to make sure my runif() + cdf version works properly
+
+d)
+
+The probability of Y = 0 is the combined probability that no one comes in or that everyone who does come in buys the only pair they try on, which is $0.8^{n}$, where n is the number of customers that day. $E[0.8^{n}] =$ 
+
+```{r}
+exp(10 * (0.8 -1))
+```
+
+```{r}
+set.seed(740)
+mean(yt(0.8, 10, 1000000)==0)
+mean(ez(0.8, 10, 1000000)==0)
+```
+P(Y=0) $\approx$ .135
+
+
+
+# Question 3
+
+a)
+
+```{r}
+g <- function(x) {
+  -(x^4) + 16
+}
+
+q3 <- function(n) {
+  x <- runif(n,-2,2)
+  y <- g(x)
+  c <- 4 * (1/n) * sum(y)
+  return(c)
+}
+
+set.seed(740)
+q3(100000)
+```
+C $\approx$ 51.18
+
+b)
+
+```{r}
+pdf <- function(x) {
+  out <- (16 - x^4) / 51.18
+  return(out)
+}
+
+cdf <- function(x) {
+  ((16 * x) / 51.18) - ((x^5) / (51.18 * 5)) + 0.5
+}
+
+
+icdf <- function(p) {
+  f <- function(x, p) {
+    abs(cdf(x) - p)
+  }
+  
+  optimize(f, lower=-2, upper=2, p=p)$minimum
+}
+
+icdf <- Vectorize(icdf)
+
+
+set.seed(740)
+u <- runif(100)
+icdf(u)
+min(icdf(u))
+max(icdf(u))
+```
+
+c)
+
+```{r}
+pdf(0)
+
+region <- function(n) {
+  val <- c()
+  x <- runif(n, -2, 2)
+  y <- runif(n, 0, pdf(0))
+  
+  for (i in 1:n) {
+    if (y[i] < pdf(x[i])) {
+      val <- c(val, x[i])
+    }
+  }
+  
+  return(val)
+  }
+
+accepted <- region(10000)
+hist(accepted)
+```
+
+
+
+# Question 4
+
+a)
+
+```{r}
+stupid_grad_question <- function(n, alpha) {
+  u <- runif(n)
+  x <- alpha * tan((u - 0.5) * pi)
+  return(x)
+}
+
+stupid_grad_question(10, 1)
+```
+
+b)
+
+```{r}
+a <- dnorm(0)
+b <- dcauchy(0)
+
+a/b
+
+region4 <- function(n, alpha) {
+  val <- c()
+  x <- runif(n,-5,5)
+  y <- runif(n,0, 1.5 * dcauchy(0))
+  
+  c_pdf <- function(x,alpha){
+    return(alpha / ((alpha^2 + x^2) * pi))
+  }
+  
+  for (i in 1:n) {
+    if (y[i] < dnorm(x[i])) {
+      val <- c(val, x[i])
+    }
+  }
+  
+  return(val)
+  }
+
+accepted4 <- region4(10000, 1)
+hist(accepted4)
+```
+
+Not a fan of this hw. We can talk on the plane for better ideas
