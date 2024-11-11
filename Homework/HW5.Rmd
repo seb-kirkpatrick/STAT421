@@ -1,0 +1,101 @@
+---
+title: "HW5"
+author: "Sebastian Kirkpatrick"
+date: "2024-11-07"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+```
+
+# Question 1
+
+```{r}
+  n <- 100000
+  n_triangles <- 0
+  
+  set.seed(740)
+  for (i in 1:n){
+    breaks <- runif(2)
+    
+    L1 <- min(breaks)
+    L2 <- max(breaks) - min(breaks)
+    L3 = 1 - max(breaks)
+    
+    if(L1 + L2 > L3 & L1 + L3 > L2 & L2 + L3 > L1){
+      n_triangles <- n_triangles + 1
+    }
+  }
+
+n_triangles / n
+
+```
+0.2500 or about 1/4.
+
+
+
+# Question 2
+
+```{r}
+n <- 1000000
+finals <- character(2 * n)
+teams <- LETTERS[1:8]
+
+set.seed(740)
+for (i in 1:n){
+  order <- sample(teams)
+  
+  top_side <- order[1:4]
+  bot_side <- order[5:8]
+  
+  t1 = min(top_side)
+  t2 = min(bot_side)
+  
+  finals[2 * i - 1] <- t1
+  finals[2 * i] <- t2
+}
+
+prob <- as.data.frame(table(finals)) |>
+  mutate(prob = Freq / n)
+
+prob |>
+  ggplot() + 
+  aes(x = finals, y = prob) +
+  geom_bar(stat = "identity") +
+  labs(x = "Team",
+       y = "Finals Probability")
+```
+b. Team Probabilities: A = 100%, B = 57.15%, C = 28.56%, D = 11.47%, E = 2.82%, and all the rest are 0.
+
+
+
+# Question 3
+
+```{r}
+n <- 1:1000
+nsim <- 5000
+prob <- c()
+
+set.seed(740)
+for (i in n) {
+  success <- 0
+  for (j in 1:nsim){
+    flips <- rbinom(i, 1, 0.5)
+    lr <- max(rle(flips)$lengths)
+    if (lr >= log(i)) {
+      success <- success + 1
+    }
+  }
+  prob[i] <- success / nsim
+}
+
+viz <- data.frame(n = n, prob = prob)
+
+viz |>
+  ggplot(aes(x = n, y = prob)) +
+  geom_line() + 
+  labs(x = "n",
+       y = "Probability")
+```
+c. I think the probability will approach 1 as n approaches infinity. ln(x) grows too slow for the potential number of coin flips in a row for it to not consistently be greater than ln(x). For example, ln of 100 million is only 18.4, and I think you will pretty easily get a string of 19 of the same flips when you have 100 million flips. Plus, the graph agrees with me loser.
