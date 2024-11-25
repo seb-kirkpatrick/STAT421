@@ -1,0 +1,137 @@
+---
+title: "HW6"
+author: "Sebastian Kirkpatrick"
+date: "2024-11-15"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(mvtnorm)
+library(copula)
+```
+
+# Question 1
+
+```{r}
+nsim <- 1000000
+mu <- c(0, -1, 1)
+sigma <- matrix(c(10, 3, 5, 3, 15, 10, 5, 10, 40), ncol = 3)
+```
+
+a)
+
+```{r}
+set.seed(740)
+a1 <- rmvnorm(nsim, mean = mu, sigma = sigma)
+mean(a1[,3] > 1)
+```
+About 50.01%
+
+b)
+
+```{r}
+mean(a1[,1] > 0 | a1[,2] > 0 | a1[,3] > 0)
+```
+About 79.68%
+
+c)
+
+```{r}
+mean(a1[,1] > 0 & a1[,2] > 0 & a1[,3] > 0)
+```
+About 18.14%
+
+d)
+
+```{r}
+a2 <- a1[,1] * a1[,2] * a1[,3]
+mean(a2)
+var(a2)
+```
+Mean = -2.06, Variance = 10872.1
+
+e)
+
+```{r}
+a3 <- apply(a1, 1, max)
+mean(a3)
+var(a3)
+```
+Mean = 3.50, Variance = 18.42
+
+f)
+
+```{r}
+cov(a2, a3)
+```
+Covariance = 185.03
+
+
+
+# Question 2
+
+```{r}
+nsim <- 100000
+set.seed(740)
+v <- rchisq(nsim, 5)
+w <- rchisq(nsim, 10)
+```
+
+a)
+
+```{r}
+plot(v ~ w)
+```
+
+b)
+
+```{r}
+mean(v > w)
+```
+About 16.54%
+
+c)
+
+```{r}
+set.seed(740)
+cop <- rCopula(nsim, copula = normalCopula(0.5, dim = 2, dispstr = "un"))
+
+v_c <- qchisq(cop[,1], 5)
+w_c <- qchisq(cop[,2], 10)
+
+plot(v_c ~ w_c)
+```
+
+d)
+
+```{r}
+mean(v_c > w_c)
+```
+About 8.43%
+
+e)
+
+```{r}
+cor <- c(-1,-.75,-0.5,-.25,0,.25,.5,.75,1)
+prob <- c()
+
+set.seed(740)
+for (i in cor) {
+  cop <- rCopula(nsim, copula = normalCopula(i, dim = 2, dispstr = "un"))
+  
+  v_c <- qchisq(cop[, 1], 5)
+  w_c <- qchisq(cop[, 2], 10)
+  
+  p <- mean(v_c > w_c)
+  
+  prob <- c(prob, p)
+}
+
+prob
+```
+
+```{r}
+plot(prob ~ cor)
+```
+
