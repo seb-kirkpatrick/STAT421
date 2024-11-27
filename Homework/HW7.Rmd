@@ -1,0 +1,242 @@
+---
+title: "HW7"
+author: "Sebastian Kirkpatrick"
+date: "2024-11-26"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(rstan)
+library(bayesplot)
+```
+
+# Question 1
+
+
+a)
+
+```{r}
+data <- list(y = c(43, 35, 46, 38, 35, 50, 48, 42, 38, 53), n = 10)
+
+fit <- stan(
+  file = "q1.stan", 
+  data = data,
+  chains = 4,
+  warmup = 1000,
+  iter = 2000,
+  cores = 1,
+  refresh = 0,
+  seed = 740
+  )
+```
+
+b)
+
+```{r}
+mcmc_hist(fit, pars = c("lambda"))
+```
+
+c)
+
+```{r}
+summary(fit)$summary
+mcmc_areas(fit, pars = c("lambda"), prob = 0.95)
+```
+95% Credible Interval: (38.89, 46.90)
+
+d)
+
+Posterior Mean: 42.78
+
+e)
+
+```{r}
+2.064643^2
+```
+Posterior Variance: 4.26
+
+
+
+# Question 2
+
+a)
+
+```{r}
+data2a <- list(y = c(43, 35, 46, 38, 35, 50, 48, 42, 38, 53), n = 10, mu = 0.025)
+
+fit2a <- stan(
+  file = "q2.stan", 
+  data = data2a,
+  chains = 4,
+  warmup = 1000,
+  iter = 2000,
+  cores = 1,
+  refresh = 0,
+  seed = 740
+  )
+```
+
+b)
+
+```{r}
+mcmc_hist(fit2a, pars = c("lambda"))
+```
+
+c)
+
+```{r}
+summary(fit2a)$summary
+mcmc_areas(fit2a, pars = c("lambda"), prob = 0.95)
+```
+95% Credible Interval:(3.854, 46.74)
+
+d)
+
+Posterior Mean: 42.68
+
+e)
+
+```{r}
+2.1194341^2
+```
+Posterior Variance: 4.49
+
+f)
+
+
+#### Mu = 10
+
+
+```{r}
+data2b <- list(y = c(43, 35, 46, 38, 35, 50, 48, 42, 38, 53), n = 10, mu = 0.1)
+
+fit2b <- stan(
+  file = "q2.stan", 
+  data = data2b,
+  chains = 4,
+  warmup = 1000,
+  iter = 2000,
+  cores = 1,
+  refresh = 0,
+  seed = 740
+  )
+
+mcmc_hist(fit2b, pars = c("lambda"))
+
+summary(fit2b)$summary
+
+mcmc_areas(fit2b, pars = c("lambda"), prob = 0.95)
+
+2.0887063^2
+```
+95% CE: (38.40, 46.49)
+
+Posterior Mean: 42.41
+
+Posterior Variance: 4.36
+
+
+#### Mu = 25
+
+
+```{r}
+data2c <- list(y = c(43, 35, 46, 38, 35, 50, 48, 42, 38, 53), n = 10, mu = 0.04)
+
+fit2c <- stan(
+  file = "q2.stan", 
+  data = data2c,
+  chains = 4,
+  warmup = 1000,
+  iter = 2000,
+  cores = 1,
+  refresh = 0,
+  seed = 740
+  )
+
+mcmc_hist(fit2c, pars = c("lambda"))
+
+summary(fit2c)$summary
+
+mcmc_areas(fit2c, pars = c("lambda"), prob = 0.95)
+
+2.062179^2
+```
+95% CE: (38.75, 46.74)
+
+Posterior Mean: 42.68
+
+Posterior Variance: 4.25
+
+
+#### Mu = 100
+
+
+```{r}
+data2d <- list(y = c(43, 35, 46, 38, 35, 50, 48, 42, 38, 53), n = 10, mu = 0.01)
+
+fit2d <- stan(
+  file = "q2.stan", 
+  data = data2d,
+  chains = 4,
+  warmup = 1000,
+  iter = 2000,
+  cores = 1,
+  refresh = 0,
+  seed = 740
+  )
+
+mcmc_hist(fit2d, pars = c("lambda"))
+
+summary(fit2d)$summary
+
+mcmc_areas(fit2d, pars = c("lambda"), prob = 0.95)
+
+2.0375104^2
+```
+95% CE: (38.85, 46.83)
+
+Posterior Mean: 42.74
+
+Posterior Variance: 4.15
+
+g)
+
+```{r}
+a <- extract(fit2a)$lambda
+b <- extract(fit2b)$lambda
+c <- extract(fit2c)$lambda
+d <- extract(fit2d)$lambda
+
+data <- data.frame(lambda = a, mu = 40)
+datb <- data.frame(lambda = b, mu = 10)
+datc <- data.frame(lambda = c, mu = 25)
+datd <- data.frame(lambda = d, mu = 100)
+
+dat_full <- rbind(data, datb, datc, datd)
+
+dat_full |>
+  ggplot(
+    aes(x=lambda, fill=factor(mu))) +
+  geom_density(alpha = 0.5) +
+  labs(x = "Lambda",
+       y = "Density",
+       fill = "mu")
+
+```
+
+h)
+
+```{r}
+post_means <- data.frame(mu=c(10,25,40,100), lambda=c(42.4087,42.67621,42.67529,42.7408))
+
+post_means |>
+  ggplot(
+    aes(x=factor(mu),y=lambda)) +
+  geom_point() +
+  labs(
+    x = "Mu",
+    y = "Posterior Mean"
+  )
+```
+
