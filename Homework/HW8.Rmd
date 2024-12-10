@@ -1,0 +1,73 @@
+---
+title: "HW8"
+author: "Sebastian Kirkpatrick"
+date: "2024-12-06"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+```
+
+a)
+
+```{r}
+nsim <- 1000000
+complete <- c()
+
+set.seed(740)
+for (i in 1:nsim) {
+  legs <- 16
+  distances <- rnorm(legs, 200, sqrt(1225))
+  
+  ss <- 10/1.1
+  n <- 10
+  c <- 10/.95
+  
+  mileage <- sample(
+    c(ss, c, n),
+    size = legs,
+    prob = c(.25, .4, .35),
+    replace = T
+  )
+  liters <- distances / mileage
+  complete[i] <- sum(liters) <= 325
+}
+
+mean(complete)
+```
+The probability Santa is able to complete his trip without needing to refuel is about .5923
+
+b)
+
+```{r}
+nsim <- 100000
+tanks <- c(356,356.2,356.4,356.6,356.8,357)
+prob <- c()
+
+set.seed(740)
+for (j in tanks) {
+  complete <- c()
+  for (i in 1:nsim) {
+    legs <- 16
+    distances <- rnorm(legs, 200, sqrt(1225))
+    
+    ss <- 10/1.1
+    n <- 10
+    c <- 10/.95
+    
+    mileage <- sample(
+      c(ss, c, n),
+      size = legs,
+      prob = c(.25, .4, .35),
+      replace = T
+    )
+    liters <- distances / mileage
+    complete[i] <- sum(liters) <= j
+  }
+  prob <- cbind(prob, mean(complete))
+}
+
+rbind(tanks,prob)
+```
+Santa will complete his journey 99% of the time when his sleigh tank is 356.4 liters
